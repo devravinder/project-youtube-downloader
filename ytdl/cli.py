@@ -49,7 +49,8 @@ def build_parser() -> argparse.ArgumentParser:
 def resolve_folder(value: Optional[str]) -> str:
     default = os.getcwd()
     raw = value if value else prompt.ask("Download folder", default)
-    folder = os.path.abspath(os.path.expanduser(raw))
+    raw = raw.strip().strip("\"'")  # Windows "Copy as path" / drag-and-drop adds quotes
+    folder = os.path.abspath(os.path.expanduser(os.path.expandvars(raw)))
     os.makedirs(folder, exist_ok=True)
     if not os.access(folder, os.W_OK):
         raise SystemExit(f"  Folder is not writable: {folder}")
@@ -101,6 +102,10 @@ def run(args: argparse.Namespace) -> int:
         browser = parse_browser(browser_spec)
     except ValueError as err:
         raise SystemExit(f"  {err}")
+
+    if browser and browser[2] and not sys.platform.startswith("linux"):
+        print(f"  Note: keyring '{browser[2]}' is Linux-only; ignored on this system.")
+        browser = (browser[0], browser[1], None, browser[3])
 
     js_runtime = detect_js_runtime(args.js_runtime)
 

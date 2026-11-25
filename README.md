@@ -5,7 +5,7 @@ Python 3.9+, one runtime dependency (`yt-dlp`), installable as a `ytdl` command.
 
 ```bash
 ytdl                      # interactive menu
-python3 -m ytdl           # same, without installing
+python3 -m ytdl           # same, without installing (Windows: python -m ytdl)
 ```
 
 ```text
@@ -22,33 +22,65 @@ Files are saved as `<index>_<title>.<ext>`, for example `01_My Song.mp3`.
 
 ## Requirements
 
-| Requirement | Why | Install (Debian/Ubuntu) |
-| ----------- | --- | ----------------------- |
-| Python 3.9+ | runs the tool | `sudo apt install python3 python3-pip` |
-| `yt-dlp[default]` | the downloader (plus its default extras) | installed by pip, see below |
-| FFmpeg | audio conversion, merging video + audio | `sudo apt install ffmpeg` |
-| Deno (or Node.js) | JavaScript runtime yt-dlp needs for YouTube | https://deno.com or https://nodejs.org |
-| `secretstorage`, `jeepney` | read encrypted browser cookies on Linux | installed by pip |
-| `python3-secretstorage python3-dbus python3-jeepney` | system versions of the cookie libraries | `sudo apt install ...` |
+Works on **Linux, Windows and macOS** (tested on Windows; Linux steps are the ones used originally).
 
-Windows/macOS do not need the Linux cookie libraries. Install FFmpeg and Deno/Node with your package manager.
+| Requirement | Why | Linux (Debian/Ubuntu) | Windows |
+| ----------- | --- | --------------------- | ------- |
+| Python 3.9+ | runs the tool | `sudo apt install python3 python3-pip` | `winget install Python.Python.3.13` |
+| `yt-dlp[default]` | the downloader and its default extras | pip (see Setup) | pip (see Setup) |
+| FFmpeg | audio conversion, merging video + audio | `sudo apt install ffmpeg` | `winget install Gyan.FFmpeg` |
+| Deno or Node.js | JavaScript runtime yt-dlp needs for YouTube | https://deno.com or https://nodejs.org | `winget install DenoLand.Deno` or `OpenJS.NodeJS.LTS` |
+| `secretstorage`, `jeepney` | read encrypted browser cookies | pip (Linux only) | not needed |
+| `python3-secretstorage python3-dbus python3-jeepney` | system versions of those cookie libraries | `sudo apt install ...` | not needed |
 
-## Setup (the steps we did)
+FFmpeg and Deno/Node must be on `PATH`. Open a new terminal after installing them.
+
+## Setup
+
+### Linux (the steps we did)
 
 ```bash
-# 1. system packages for reading browser cookies on Linux
+# 1. system packages for reading browser cookies
 sudo apt update
 sudo apt install python3-secretstorage python3-dbus python3-jeepney -y
 
 # 2. yt-dlp and the cookie libraries
 python3 -m pip install -U "yt-dlp[default]" secretstorage jeepney
 
-# 3. FFmpeg and Deno (or Node.js) installed separately and available on PATH
+# 3. FFmpeg and Deno (or Node.js) installed and available on PATH
 
 # 4. this tool (from the project folder)
 python3 -m pip install .          # gives you the `ytdl` command
 ```
 
+### Windows (PowerShell)
+
+```powershell
+winget install Python.Python.3.13 Gyan.FFmpeg DenoLand.Deno
+# new terminal, then from the project folder:
+python -m pip install .           # gives you the `ytdl` command
+```
+
+`pip install .` pulls `yt-dlp[default]` automatically; the Linux cookie libraries are only installed on Linux.
+Without installing: `python -m pip install "yt-dlp[default]"` then `python -m ytdl`.
+
+### Internal package index (company network)
+
+If your pip is set up for an internal repository (JFrog Artifactory or similar), nothing special is needed:
+`pip install .` uses it through your pip configuration. To set it explicitly for one command:
+
+```bash
+python -m pip install . --index-url <your internal PyPI simple URL>
+```
+
+Keep the URL in your user pip config (`pip config set global.index-url ...`), not in this repository.
+
+### Cookies on each system
+
+- **Linux**: Brave/Chrome cookies are read through the keyring; use `--browser brave+gnomekeyring` if auto-detection fails.
+- **Windows**: close the browser before downloading, otherwise its cookie database is locked. Recent Chrome and
+  Edge versions use encryption that yt-dlp may not be able to read; if so, use Firefox or Brave, or choose "No cookies".
+- **macOS**: the system asks for Keychain access the first time.
 Your original command, for comparison, is what the tool runs for you:
 
 ```bash
@@ -101,7 +133,7 @@ Set `YTDL_BROWSER=brave` once (e.g. in `~/.bashrc`) to stop being asked about co
 
 - **pip / pipx**: `pipx install .` (or `pip install .`). To share, build a wheel with
   `python3 -m pip install build && python3 -m build`, then install `dist/*.whl` anywhere.
-- **Single executable (no Python needed)**: `pip install pyinstaller && pyinstaller --onefile -n ytdl ytdl/__main__.py`.
+- **Single executable (no Python needed)**: `pip install pyinstaller && pyinstaller --onefile -n ytdl ytdl/__main__.py`\n  (run it on each OS you target: gives `ytdl` on Linux and `ytdl.exe` on Windows).
   FFmpeg and Deno/Node still have to be installed on the target machine.
 
 ## Layout
