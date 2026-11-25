@@ -43,7 +43,10 @@ FFmpeg and Deno/Node must be on `PATH`. Open a new terminal after installing the
 sudo apt update
 sudo apt install python3-secretstorage python3-dbus python3-jeepney -y
 python3 -m pip install -U "yt-dlp[default]" secretstorage jeepney
-# install FFmpeg and Deno (or Node.js), make sure they are on PATH
+sudo apt install ffmpeg
+curl -fsSL https://deno.land/install.sh | sh      # or: sudo apt install nodejs (Node 20+)
+echo 'export PATH="$HOME/.deno/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+ffmpeg -version && deno --version                 # check
 python3 -m pip install .          # gives you the `ytdl` command
 ```
 
