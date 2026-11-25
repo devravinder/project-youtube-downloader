@@ -37,19 +37,13 @@ FFmpeg and Deno/Node must be on `PATH`. Open a new terminal after installing the
 
 ## Setup
 
-### Linux (the steps we did)
+### Linux
 
 ```bash
-# 1. system packages for reading browser cookies
 sudo apt update
 sudo apt install python3-secretstorage python3-dbus python3-jeepney -y
-
-# 2. yt-dlp and the cookie libraries
 python3 -m pip install -U "yt-dlp[default]" secretstorage jeepney
-
-# 3. FFmpeg and Deno (or Node.js) installed and available on PATH
-
-# 4. this tool (from the project folder)
+# install FFmpeg and Deno (or Node.js), make sure they are on PATH
 python3 -m pip install .          # gives you the `ytdl` command
 ```
 
@@ -57,85 +51,53 @@ python3 -m pip install .          # gives you the `ytdl` command
 
 ```powershell
 winget install Python.Python.3.13 Gyan.FFmpeg DenoLand.Deno
-# new terminal, then from the project folder:
+# open a new terminal, then from the project folder:
 python -m pip install .           # gives you the `ytdl` command
 ```
 
-`pip install .` pulls `yt-dlp[default]` automatically; the Linux cookie libraries are only installed on Linux.
-Without installing: `python -m pip install "yt-dlp[default]"` then `python -m ytdl`.
+`pip install .` also installs `yt-dlp[default]`; the cookie libraries are installed on Linux only.
 
-### Internal package index (company network)
+### Cookies
 
-If your pip is set up for an internal repository (JFrog Artifactory or similar), nothing special is needed:
-`pip install .` uses it through your pip configuration. To set it explicitly for one command:
-
-```bash
-python -m pip install . --index-url <your internal PyPI simple URL>
-```
-
-Keep the URL in your user pip config (`pip config set global.index-url ...`), not in this repository.
-
-### Cookies on each system
-
-- **Linux**: Brave/Chrome cookies are read through the keyring; use `--browser brave+gnomekeyring` if auto-detection fails.
-- **Windows**: close the browser before downloading, otherwise its cookie database is locked. Recent Chrome and
-  Edge versions use encryption that yt-dlp may not be able to read; if so, use Firefox or Brave, or choose "No cookies".
-- **macOS**: the system asks for Keychain access the first time.
-Your original command, for comparison, is what the tool runs for you:
-
-```bash
-yt-dlp --cookies-from-browser brave --js-runtimes deno \
-  -x --audio-format mp3 --audio-quality 0 \
-  -o "$HOME/Music/YouTube/%(title)s.%(ext)s" "<url>" ...
-```
+- **Linux**: read through the keyring; use `--browser brave+gnomekeyring` if auto-detection fails.
+- **Windows**: close the browser first (its cookie file is locked). Recent Chrome/Edge may not be readable;
+  use Firefox or Brave, or no cookies.
+- **macOS**: allow Keychain access when asked.
 
 ## Use
 
-### Interactive
-
-Run `ytdl`. You are asked, in order: download folder, playlist/single/multiple, video/audio, format,
-link(s), browser cookies, then a summary to confirm.
-
-**Audio formats**: `mp3` (best, VBR 0), `mp3-192`, `m4a`, `opus`, `flac`, `wav`, `original` (no conversion).
-**Video formats**: `best` (MP4), `1080`, `720`, `480`, `360` (MP4, up to that height), `best-mkv`.
-
-For *Multiple*, paste one link per line and finish with an empty line.
-
-### With flags
-
-Anything not given as a flag is asked.
+Run `ytdl` and answer the prompts: folder, playlist/single/multiple, video/audio, format, link(s), cookies, confirm.
+Any prompt can be skipped with a flag:
 
 ```bash
-ytdl --dir ~/Music/YouTube --mode single --kind audio --format mp3 \
-     --url "https://www.youtube.com/watch?v=CvP_hfZvH0o" --browser brave -y
-
-ytdl --mode multiple --kind audio --format mp3 --file links.txt --browser brave+gnomekeyring
-
-ytdl --mode playlist --kind video --format 720 --url "https://www.youtube.com/playlist?list=..."
+ytdl --dir ~/Music/YouTube --mode single --kind audio --format mp3 --url "<link>" --browser brave -y
+ytdl --mode multiple --kind audio --format mp3 --file links.txt
+ytdl --mode playlist --kind video --format 720 --url "<playlist link>"
 ```
 
-| Flag | Meaning |
-| ---- | ------- |
-| `--dir` | download folder (default: current folder) |
+| Flag | Values |
+| ---- | ------ |
+| `--dir` | download folder (default: current) |
 | `--mode` | `playlist`, `single`, `multiple` |
 | `--kind` | `video`, `audio` |
-| `--format` | format key from the lists above |
-| `--url` | a link; repeat for several |
-| `--file` | text file with one link per line (`#` comments allowed) |
-| `--browser` | `brave`, `chrome`, `chromium`, `edge`, `firefox`, ... Optional `+KEYRING` and `:PROFILE`, e.g. `brave+gnomekeyring`, `chrome:Profile 1`. `none` disables. Default: env `YTDL_BROWSER`, else asked |
+| `--format` | audio: `mp3`, `mp3-192`, `m4a`, `opus`, `flac`, `wav`, `original`. video: `best`, `1080`, `720`, `480`, `360`, `best-mkv` |
+| `--url` | link, repeatable |
+| `--file` | text file, one link per line (`#` comments allowed) |
+| `--browser` | `brave`, `chrome`, `chromium`, `edge`, `firefox`, ... optional `+KEYRING` / `:PROFILE`; `none` to disable. Default: env `YTDL_BROWSER`, else asked |
 | `--js-runtime` | `auto` (deno, then node), `deno`, `node`, `none` |
-| `-y`, `--yes` | skip the confirmation |
+| `-y` | skip confirmation |
 
-Exit code is `0` when everything downloaded, `1` if any link failed, `130` if cancelled.
-Set `YTDL_BROWSER=brave` once (e.g. in `~/.bashrc`) to stop being asked about cookies.
+Exit code: `0` all downloaded, `1` some failed, `130` cancelled.
 
 ## Distribute
 
-- **pip / pipx**: `pipx install .` (or `pip install .`). To share, build a wheel with
-  `python3 -m pip install build && python3 -m build`, then install `dist/*.whl` anywhere.
-- **Single executable (no Python needed)**: `pip install pyinstaller && pyinstaller --onefile -n ytdl ytdl/__main__.py`\n  (run it on each OS you target: gives `ytdl` on Linux and `ytdl.exe` on Windows).
-  FFmpeg and Deno/Node still have to be installed on the target machine.
+| Goal | Command |
+| ---- | ------- |
+| Install from source | `pipx install .` or `pip install .` |
+| Build a wheel to share | `python -m pip install build` then `python -m build`; install with `pip install dist/ytdl_cli-*.whl` |
+| Standalone executable | `pip install pyinstaller` then `pyinstaller --onefile -n ytdl ytdl/__main__.py` (build on each OS: `ytdl` / `ytdl.exe`) |
 
+FFmpeg and Deno/Node must be installed on every target machine, including for the standalone executable.
 ## Layout
 
 ```text
