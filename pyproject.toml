@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ytdl-cli"
+version = "1.0.0"
+description = "Interactive command-line utility to download YouTube videos and audio with yt-dlp"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "yt-dlp[default]",
+    "secretstorage; sys_platform == 'linux'",
+    "jeepney; sys_platform == 'linux'",
+]
+
+[project.scripts]
+ytdl = "ytdl.cli:main"
+
+[tool.setuptools]
+packages = ["ytdl"]
